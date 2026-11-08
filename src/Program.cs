@@ -33,7 +33,12 @@ namespace MyPin
                     path = Application.ExecutablePath;
                 }
 
-                Application.Run(new TrayApp());
+                TrayApp app = new TrayApp();
+                if (args.Length >= 1 && string.Equals(args[0], "--show", StringComparison.OrdinalIgnoreCase))
+                {
+                    app.ShowWindow();
+                }
+                Application.Run(app);
                 GC.KeepAlive(mutex);
             }
 
