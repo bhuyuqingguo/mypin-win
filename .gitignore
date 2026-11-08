@@ -1,0 +1,20 @@
+# Build output
+dist/
+bin/
+obj/
+
+# Compiler leftovers
+*.tmp
+CSC*.TMP
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.sln.DotSettings.user
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
