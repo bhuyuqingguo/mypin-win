@@ -7,6 +7,10 @@
 > 纯 .NET Framework 4.8 + WinForms + Core Audio COM 直调，单文件 exe，无需安装运行时。
 > 原始分辨率高、150%/200% 缩放的高分屏下按原生像素渲染（PerMonitorV2）。
 
+**[下载安装包 MicPinSetup.exe](https://github.com/bhuyuqingguo/micpin-win/releases/latest/download/MicPinSetup.exe)**（89 KB，双击安装）
+· [便携版 MicPin.exe](https://github.com/bhuyuqingguo/micpin-win/releases/latest/download/MicPin.exe)
+· [全部版本](https://github.com/bhuyuqingguo/micpin-win/releases)
+
 ---
 
 ## 截图
