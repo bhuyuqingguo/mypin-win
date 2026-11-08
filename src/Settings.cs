@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Text;
 
-namespace MicPin
+namespace MyPin
 {
     [DataContract]
     public sealed class Settings
@@ -50,13 +50,53 @@ namespace MicPin
             {
                 string folder = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "MicPin");
+                    "MyPin");
                 return Path.Combine(folder, "settings.json");
+            }
+        }
+
+        /// <summary>Moves the settings left by the old MicPin build into the MyPin folder.</summary>
+        private static void MigrateLegacyFolder()
+        {
+            try
+            {
+                string target = FilePath;
+                if (File.Exists(target))
+                {
+                    return;
+                }
+
+                string legacyFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "MicPin");
+                string legacy = Path.Combine(legacyFolder, "settings.json");
+                if (!File.Exists(legacy))
+                {
+                    return;
+                }
+
+                string folder = Path.GetDirectoryName(target);
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+                File.Move(legacy, target);
+
+                if (Directory.GetFileSystemEntries(legacyFolder).Length == 0)
+                {
+                    Directory.Delete(legacyFolder);
+                }
+            }
+            catch (Exception)
+            {
+                // A failed migration only costs the user their preferences.
             }
         }
 
         public static Settings Load()
         {
+            MigrateLegacyFolder();
+
             try
             {
                 string path = FilePath;
@@ -113,7 +153,8 @@ namespace MicPin
     internal static class Startup
     {
         private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-        private const string ValueName = "MicPin";
+        private const string ValueName = "MyPin";
+        private const string LegacyValueName = "MicPin";
 
         public static bool IsEnabled()
         {
@@ -140,6 +181,13 @@ namespace MicPin
                     {
                         return;
                     }
+
+                    // Drop the entry written by the old MicPin build so it cannot start a second copy.
+                    if (key.GetValue(LegacyValueName) != null)
+                    {
+                        key.DeleteValue(LegacyValueName, false);
+                    }
+
                     if (enabled)
                     {
                         key.SetValue(ValueName, "\"" + executablePath + "\"");

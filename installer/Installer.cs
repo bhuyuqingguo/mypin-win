@@ -8,24 +8,29 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-namespace MicPinSetup
+namespace MyPinSetup
 {
     /// <summary>
     /// Per-user installer: no admin rights, no MSI, no external tooling.
-    /// MicPin.exe is embedded as a managed resource, so this single file is the whole package.
+    /// MyPin.exe is embedded as a managed resource, so this single file is the whole package.
     /// </summary>
     internal static class Program
     {
-        internal const string Version = "1.0.0";
-        internal const string PayloadResource = "MicPinPayload.exe";
+        internal const string Version = "1.1.0";
+        internal const string PayloadResource = "MyPinPayload.exe";
+        internal const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        internal const string UninstallKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\MyPin";
+
+        // Names used by the 1.0 build; cleaned up so two copies never run at once.
+        private const string LegacyName = "MicPin";
 
         internal static readonly string InstallDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            @"Programs\MicPin");
+            @"Programs\MyPin");
 
         internal static string AppPath
         {
-            get { return Path.Combine(InstallDir, "MicPin.exe"); }
+            get { return Path.Combine(InstallDir, "MyPin.exe"); }
         }
 
         internal static string UninstallerPath
@@ -39,7 +44,7 @@ namespace MicPinSetup
             {
                 return Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.Programs),
-                    "MicPin.lnk");
+                    "MyPin.lnk");
             }
         }
 
@@ -49,7 +54,7 @@ namespace MicPinSetup
             {
                 return Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                    "MicPin.lnk");
+                    "MyPin.lnk");
             }
         }
 
@@ -85,9 +90,11 @@ namespace MicPinSetup
 
         internal static void Install(bool launchAtLogin, bool desktopShortcut)
         {
+            RemoveLegacyInstall();
+
             Directory.CreateDirectory(InstallDir);
 
-            string payload = Path.Combine(Path.GetTempPath(), "micpin-payload.exe");
+            string payload = Path.Combine(Path.GetTempPath(), "mypin-payload.exe");
             using (Stream resource = Assembly.GetExecutingAssembly().GetManifestResourceStream(PayloadResource))
             {
                 if (resource == null)
@@ -134,31 +141,22 @@ namespace MicPinSetup
 
         private static void Uninstall()
         {
-            try
-            {
-                foreach (Process process in Process.GetProcessesByName("MicPin"))
-                {
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (Exception)
-                    {
-                    }
-                }
-            }
-            catch (Exception)
-            {
-            }
+            KillRunningCopies();
 
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true))
                 {
-                    if (key != null && key.GetValue("MicPin") != null)
+                    if (key != null)
                     {
-                        key.DeleteValue("MicPin", false);
+                        if (key.GetValue("MyPin") != null)
+                        {
+                            key.DeleteValue("MyPin", false);
+                        }
+                        if (key.GetValue(LegacyName) != null)
+                        {
+                            key.DeleteValue(LegacyName, false);
+                        }
                     }
                 }
             }
@@ -171,8 +169,16 @@ namespace MicPinSetup
 
             try
             {
+                Registry.CurrentUser.DeleteSubKeyTree(UninstallKeyPath, false);
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
                 Registry.CurrentUser.DeleteSubKeyTree(
-                    @"Software\Microsoft\Windows\CurrentVersion\Uninstall\MicPin", false);
+                    @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + LegacyName, false);
             }
             catch (Exception)
             {
@@ -186,6 +192,79 @@ namespace MicPinSetup
                 CreateNoWindow = true,
                 UseShellExecute = false
             });
+        }
+
+        private static void KillRunningCopies()
+        {
+            string[] names = new string[] { "MyPin", LegacyName };
+            foreach (string name in names)
+            {
+                try
+                {
+                    foreach (Process process in Process.GetProcessesByName(name))
+                    {
+                        try
+                        {
+                            process.Kill();
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+
+        /// <summary>Removes the files, shortcuts and registry entries left behind by the 1.0 build.</summary>
+        private static void RemoveLegacyInstall()
+        {
+            KillRunningCopies();
+
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true))
+                {
+                    if (key != null && key.GetValue(LegacyName) != null)
+                    {
+                        key.DeleteValue(LegacyName, false);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                Registry.CurrentUser.DeleteSubKeyTree(
+                    @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + LegacyName, false);
+            }
+            catch (Exception)
+            {
+            }
+
+            DeleteFile(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Programs), LegacyName + ".lnk"));
+            DeleteFile(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), LegacyName + ".lnk"));
+
+            string legacyDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                @"Programs\" + LegacyName);
+            try
+            {
+                if (Directory.Exists(legacyDir))
+                {
+                    Directory.Delete(legacyDir, true);
+                }
+            }
+            catch (Exception)
+            {
+                // A locked file in the old folder is harmless; the new build lives elsewhere.
+            }
         }
 
         private static void DeleteFile(string path)
@@ -219,7 +298,7 @@ namespace MicPinSetup
             shortcutType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut, new object[] { AppPath });
             shortcutType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut, new object[] { InstallDir });
             shortcutType.InvokeMember("IconLocation", BindingFlags.SetProperty, null, shortcut, new object[] { AppPath + ",0" });
-            shortcutType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { "MicPin" });
+            shortcutType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { "定音 MyPin" });
             shortcutType.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
         }
 
@@ -228,8 +307,30 @@ namespace MicPinSetup
             // The app rewrites the Run key from its own settings on every start,
             // so the preference has to be stored there as well.
             string folder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MicPin");
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MyPin");
             string path = Path.Combine(folder, "settings.json");
+
+            string legacyFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), LegacyName);
+            string legacyPath = Path.Combine(legacyFolder, "settings.json");
+
+            Directory.CreateDirectory(folder);
+
+            // Take over the 1.0 settings instead of shadowing them with fresh defaults.
+            if (!File.Exists(path) && File.Exists(legacyPath))
+            {
+                try
+                {
+                    File.Move(legacyPath, path);
+                    if (Directory.GetFileSystemEntries(legacyFolder).Length == 0)
+                    {
+                        Directory.Delete(legacyFolder);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
 
             string json;
             if (File.Exists(path))
@@ -257,12 +358,11 @@ namespace MicPinSetup
 
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Run"))
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKeyPath))
                 {
                     if (key != null)
                     {
-                        key.SetValue("MicPin", "\"" + AppPath + "\"");
+                        key.SetValue("MyPin", "\"" + AppPath + "\"");
                     }
                 }
             }
@@ -275,14 +375,13 @@ namespace MicPinSetup
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Uninstall\MicPin"))
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(UninstallKeyPath))
                 {
                     if (key == null)
                     {
                         return;
                     }
-                    key.SetValue("DisplayName", "MicPin");
+                    key.SetValue("DisplayName", "定音 MyPin");
                     key.SetValue("DisplayVersion", Version);
                     key.SetValue("DisplayIcon", AppPath);
                     key.SetValue("InstallLocation", InstallDir);
@@ -314,7 +413,7 @@ namespace MicPinSetup
 
         public SetupForm()
         {
-            Text = "MicPin 安装程序";
+            Text = "定音 MyPin 安装程序";
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -325,7 +424,7 @@ namespace MicPinSetup
             Icon = null;
 
             Label title = new Label();
-            title.Text = "安装 MicPin";
+            title.Text = "安装定音 MyPin";
             title.Font = new Font("Segoe UI", 15f, FontStyle.Bold);
             title.ForeColor = Color.FromArgb(23, 26, 31);
             title.SetBounds(24, 18, 420, 30);
@@ -355,7 +454,7 @@ namespace MicPinSetup
             Controls.Add(location);
 
             _launchAtLogin = new CheckBox();
-            _launchAtLogin.Text = "登录时启动 MicPin";
+            _launchAtLogin.Text = "登录时启动定音";
             _launchAtLogin.SetBounds(24, 142, 300, 22);
             Controls.Add(_launchAtLogin);
 
@@ -405,7 +504,7 @@ namespace MicPinSetup
             try
             {
                 Program.Install(_launchAtLogin.Checked, _desktopShortcut.Checked);
-                _status.Text = "安装完成，正在启动 MicPin…";
+                _status.Text = "安装完成，正在启动定音…";
                 Application.DoEvents();
 
                 try
@@ -424,7 +523,7 @@ namespace MicPinSetup
                 _cancel.Enabled = true;
                 _status.Text = string.Empty;
                 MessageBox.Show(
-                    this, "安装失败：" + error.Message, "MicPin",
+                    this, "安装失败：" + error.Message, "定音 MyPin",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

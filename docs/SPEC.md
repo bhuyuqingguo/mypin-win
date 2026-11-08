@@ -1,6 +1,6 @@
 # 技术规格（Specification）
 
-本文档描述 MicPin for Windows 的实现规格：数据结构、算法、状态机、持久化、界面与 DPI 规则。
+本文档描述定音 MyPin for Windows 的实现规格：数据结构、算法、状态机、持久化、界面与 DPI 规则。
 实现必须与本文一致；改动行为时请同步更新本文件。
 
 ---
@@ -134,7 +134,7 @@ PickAutomatic(orderedDevices, blocked):
 
 | 数据 | 位置 | 生命周期 |
 | --- | --- | --- |
-| `Settings.DeviceOrder : List<string>` | `%APPDATA%\MicPin\settings.json` | 持久化 |
+| `Settings.DeviceOrder : List<string>` | `%APPDATA%\MyPin\settings.json` | 持久化 |
 | `TrayApp._blocked : HashSet<string>` | 进程内存 | 会话级，退出即清空 |
 
 设备在内存中的排序结果不落盘，落盘的只有 id 列表。
@@ -212,7 +212,7 @@ RecordSwitch(now):
 
 ## 8. 持久化规格
 
-文件：`%APPDATA%\MicPin\settings.json`（UTF-8 无 BOM，DataContract JSON）。
+文件：`%APPDATA%\MyPin\settings.json`（UTF-8 无 BOM，DataContract JSON）。
 
 ```json
 {
@@ -243,7 +243,7 @@ RecordSwitch(now):
 - 新字段必须通过 `[OnDeserializing]` 给默认值，保证旧配置文件可加载。
 - 屏蔽状态**不**写入此文件。
 
-开机启动：`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`，值名 `MicPin`，值 `"<exe 路径>"`。
+开机启动：`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`，值名 `MyPin`，值 `"<exe 路径>"`。
 每次启动时按 `launchAtLogin` 校正（存在/不存在）。
 
 ---
@@ -252,7 +252,7 @@ RecordSwitch(now):
 
 | 项 | 规格 |
 | --- | --- |
-| 互斥体 | `Local\MicPinWin.SingleInstance`（`Local\` = 当前登录会话） |
+| 互斥体 | `Local\MyPinWin.SingleInstance`（`Local\` = 当前登录会话） |
 | 重复启动 | 第二个进程立即退出，返回 0 |
 | `--write-icon <path>` | 生成多尺寸 ICO 后退出（构建流程使用） |
 
@@ -281,7 +281,7 @@ clientHeight = buttonTop + 34 + 18
 | 元素 | 位置/尺寸 | 说明 |
 | --- | --- | --- |
 | 麦克风图标 | (18, 16) 34×34 | 程序化绘制，Accent 色 |
-| 标题 `MicPin` | (62, 14) | 15pt Bold |
+| 标题 `MyPin` | (62, 14) | 15pt Bold |
 | 副标题 | (63, 44) | 8.5pt，次要色 |
 | 状态卡片 | (16, 78) 428×84 | 圆角 10，Surface 填充 + Border 描边 |
 | 「当前输入」 | (32, 88) | 8.5pt 次要色 |
@@ -329,7 +329,7 @@ clientHeight = buttonTop + 34 + 18
 
 - 图标三态：Locked（实心麦克风）/ Idle（空心）/ Paused（打叉），16~20px 按系统小图标尺寸绘制。
 - 左键单击 / 双击 → 打开窗口；右键 → 菜单。
-- tooltip：`MicPin - <当前设备名>`。
+- tooltip：`MyPin - <当前设备名>`。
 - 菜单在 `Opening` 事件里重建，保证设备列表实时。
 
 ---
@@ -402,7 +402,7 @@ clientHeight = buttonTop + 34 + 18
 
 ---
 
-## 15. 诊断工具规格（`MicPinDiag.exe`）
+## 15. 诊断工具规格（`MyPinDiag.exe`）
 
 输出内容：
 
@@ -438,4 +438,4 @@ clientHeight = buttonTop + 34 + 18
 - `OrderDevices` / `MoveDevice` 的顺序与“掉线槽位保留”。
 - `Settings` 的 JSON 往返与缺字段默认值。
 
-建议后续抽出 `MicPin.Tests`（可在有 SDK 的机器上运行）覆盖以上四点。
+建议后续抽出 `MyPin.Tests`（可在有 SDK 的机器上运行）覆盖以上四点。

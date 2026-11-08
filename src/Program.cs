@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace MicPin
+namespace MyPin
 {
     internal static class Program
     {
@@ -17,7 +17,7 @@ namespace MicPin
             }
 
             bool createdNew;
-            using (Mutex mutex = new Mutex(true, "Local\\MicPinWin.SingleInstance", out createdNew))
+            using (Mutex mutex = new Mutex(true, "Local\\MyPin.SingleInstance", out createdNew))
             {
                 if (!createdNew)
                 {

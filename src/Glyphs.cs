@@ -7,7 +7,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace MicPin
+namespace MyPin
 {
     internal enum MicState
     {

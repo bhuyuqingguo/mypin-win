@@ -1,4 +1,4 @@
-# MicPin for Windows — 交接文档
+# 定音 MyPin for Windows — 交接文档
 
 面向接手这个仓库的开发者。需求看 [REQUIREMENTS.md](REQUIREMENTS.md)，实现细节看 [SPEC.md](SPEC.md)，
 本文只讲**怎么读懂代码、怎么构建、怎么验证、哪里容易踩坑、后面还能做什么**。
@@ -45,7 +45,7 @@
 
 | 文件 | 职责 | 改动时的注意事项 |
 | --- | --- | --- |
-| `src/Program.cs` | 入口；单实例 Mutex；`--write-icon` 构建钩子 | 单实例名 `Local\MicPinWin.SingleInstance` 是会话级 |
+| `src/Program.cs` | 入口；单实例 Mutex；`--write-icon` 构建钩子 | 单实例名 `Local\MyPinWin.SingleInstance` 是会话级 |
 | `src/CoreAudio.cs` | 全部 COM 互操作：接口定义、`PROPERTYKEY`/`PROPVARIANT`、`IPolicyConfig` | vtable 顺序不能动，见 SPEC §3 |
 | `src/AudioDevices.cs` | 端点枚举、分类（Bluetooth/Virtual/USB/BuiltIn/Other）、默认设备读写、`PickAutomatic` | `PickAutomatic` 是 `static`，纯函数，便于测试 |
 | `src/TrayApp.cs` | 应用上下文：**所有业务决策都在这里** | 新增功能优先塞进 `Evaluate()` 而不是各自为政 |
@@ -59,9 +59,9 @@
 | `src/Settings.cs` | JSON 持久化（`DataContractJsonSerializer`）+ 开机启动注册表 | 反序列化时 `[OnDeserializing]` 填默认值 |
 | `src/Strings.cs` | 中英双语，`L.Zh` 决定语言 | 新增文案必须两种语言都写 |
 | `src/Diag.cs` | 独立控制台诊断程序（不参与主程序编译） | `build.ps1` 里单独的 source 列表 |
-| `installer/Installer.cs` | 自包含 per-user 安装器 / 卸载器 | 主程序 exe 被嵌成资源 `MicPinPayload.exe` |
+| `installer/Installer.cs` | 自包含 per-user 安装器 / 卸载器 | 主程序 exe 被嵌成资源 `MyPinPayload.exe` |
 | `build.ps1` | 编译主程序 + 诊断工具 | 两遍编译，见 §3 |
-| `build-installer.ps1` | 编译安装包，把 `dist\MicPin.exe` 嵌进去 | 依赖 `dist\MicPin.exe` 已存在 |
+| `build-installer.ps1` | 编译安装包，把 `dist\MyPin.exe` 嵌进去 | 依赖 `dist\MyPin.exe` 已存在 |
 
 ### 关键函数索引
 
@@ -94,20 +94,18 @@
 
 如果哪天允许引入 SDK，把这套源码迁到 `net48` 的 csproj 是直接的（文件无 NuGet 依赖）。
 
-### 3.2 主程序：两遍编译
+### 3.2 主程序：单遍编译
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-1. **第一遍**：不带图标编译 → `dist\MicPin.exe`。
-2. **生成图标**：`MicPin.exe --write-icon dist\micpin.ico` 启动自身，用 GDI+ 画出多尺寸 .ico 写盘，
-   然后立刻退出（不进消息循环）。这样仓库里不需要提交二进制图标。
-3. **第二遍**：带 `/win32icon:dist\micpin.ico` 重新编译，覆盖同一个 exe。
-4. **诊断工具**：单独用 `CoreAudio.cs + AudioDevices.cs + Strings.cs + Diag.cs` 编 `MicPinDiag.exe`
+1. **主程序**：一次编译出 `dist\MyPin.exe`，用 `/win32icon:assets\logo\app-icon.ico` 直接嵌入品牌图标
+   （图标是仓库里的设计稿，不再由程序运行时生成）。
+2. **诊断工具**：单独用 `CoreAudio.cs + AudioDevices.cs + Strings.cs + Diag.cs` 编 `MyPinDiag.exe`
    （`/target:exe` 控制台程序）。
 
-> 第二遍之前如果 `MicPin.exe` 正在运行，文件会被锁住导致编译失败 —— 先 `Stop-Process -Name MicPin -Force`。
+> 编译前如果 `MyPin.exe` 正在运行，文件会被锁住导致编译失败 —— 先 `Stop-Process -Name MyPin -Force`。
 > 这一条在本地反复迭代时最容易忘。
 
 ### 3.3 安装包
@@ -116,20 +114,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 ```
 
-- 若 `dist\MicPin.exe` 不存在会先调 `build.ps1`；
-- 把 `dist\MicPin.exe` 作为**托管资源**编进安装器：`/resource:dist\MicPin.exe,MicPinPayload.exe`；
-- 产物 `dist\MicPinSetup.exe`（约 89 KB），同样带 DPI 清单与图标。
+- 若 `dist\MyPin.exe` 不存在会先调 `build.ps1`；
+- 把 `dist\MyPin.exe` 作为**托管资源**编进安装器：`/resource:dist\MyPin.exe,MyPinPayload.exe`；
+- 产物 `dist\MyPinSetup.exe`（约 122 KB），同样带 DPI 清单与品牌图标。
 
 安装器行为（`installer/Installer.cs`）：
 
 | 动作 | 位置 |
 | --- | --- |
-| 程序 | `%LOCALAPPDATA%\Programs\MicPin\MicPin.exe` |
-| 卸载器 | `%LOCALAPPDATA%\Programs\MicPin\Uninstall.exe`（安装器自身副本） |
-| 开始菜单 | `%APPDATA%\Microsoft\Windows\Start Menu\Programs\MicPin.lnk` |
-| 桌面快捷方式 | `%USERPROFILE%\Desktop\MicPin.lnk`（默认创建，可取消） |
-| 登录启动 | `HKCU\...\Run` 的 `MicPin` 值 + 改写 `settings.json` 的 `launchAtLogin` |
-| 卸载登记 | `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MicPin` |
+| 程序 | `%LOCALAPPDATA%\Programs\MyPin\MyPin.exe` |
+| 卸载器 | `%LOCALAPPDATA%\Programs\MyPin\Uninstall.exe`（安装器自身副本） |
+| 开始菜单 | `%APPDATA%\Microsoft\Windows\Start Menu\Programs\MyPin.lnk` |
+| 桌面快捷方式 | `%USERPROFILE%\Desktop\MyPin.lnk`（默认创建，可取消） |
+| 登录启动 | `HKCU\...\Run` 的 `MyPin` 值 + 改写 `settings.json` 的 `launchAtLogin` |
+| 卸载登记 | `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MyPin` |
 
 **per-user，不需要管理员**，因此不触发 UAC。
 
@@ -142,7 +140,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
   字段不存在则插入到末尾 `}` 前。
 - 卸载时自删目录用 `cmd.exe /c ping 127.0.0.1 -n 3 > nul & rmdir /s /q "<InstallDir>"`
   —— `ping` 纯粹当 `sleep` 用，等进程退出后再删。
-- 静默参数：`MicPinSetup.exe --install`（默认开登录启动与桌面快捷方式）、`--uninstall`。
+- 静默参数：`MyPinSetup.exe --install`（默认开登录启动与桌面快捷方式）、`--uninstall`。
+- **从 1.0 升级**：安装前会 `KillRunningCopies()` 并清掉旧名 `MicPin` 的安装目录、快捷方式、
+  `Run` 值、卸载登记项；`settings.json` 若只存在于 `%APPDATA%\MicPin\` 会搬到 `%APPDATA%\MyPin\`
+  （主程序 `Settings.Load()` 里也有一份同样的迁移，两边都跑不会互相覆盖）。
 
 ---
 
@@ -164,8 +165,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 ### 4.2 诊断工具
 
 ```powershell
-.\dist\MicPinDiag.exe                 # 端点列表 + 三种 role 的默认设备 + 自动模式结果 + PolicyConfig 可用性
-.\dist\MicPinDiag.exe --set "CABLE"   # 按 id 或名称子串把默认输入切到匹配设备
+.\dist\MyPinDiag.exe                 # 端点列表 + 三种 role 的默认设备 + 自动模式结果 + PolicyConfig 可用性
+.\dist\MyPinDiag.exe --set "CABLE"   # 按 id 或名称子串把默认输入切到匹配设备
 ```
 
 `PolicyConfig available: True` 且 `Round-trip SetDefaultEndpoint: OK` 说明写入链路通；
@@ -189,7 +190,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 
 | 现象 | 原因 / 处理 |
 | --- | --- |
-| 编译报文件被占用 | `MicPin.exe` 在跑，先 `Stop-Process -Name MicPin -Force` |
+| 编译报文件被占用 | `MyPin.exe` 在跑，先 `Stop-Process -Name MyPin -Force` |
 | 新装的版本双击没反应 | 便携版已在跑，单实例 Mutex 生效（预期行为） |
 | PowerShell 启动的 exe 在命令结束后消失 | 用 `explorer.exe "<path>"` 启动可持久运行 |
 | `Start-Process -ArgumentList ""` 报错 | 空参数要单独分支，不要传空串 |
@@ -220,7 +221,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 4. **屏蔽持久化选项**：给「屏蔽」加一个「记住」勾选。
 5. **按应用区分设备**：Windows 没有系统级 API，需要 hook 或虚拟声卡方案，成本高。
 6. **单元测试**：`PickAutomatic` / `OrderDevices` / 分类是纯逻辑，可以抽出来跑测试，
-   现在只能靠 `MicPinDiag.exe` 手工验证。
+   现在只能靠 `MyPinDiag.exe` 手工验证。
 
 ---
 
@@ -229,12 +230,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 仓库已经可以直接 `git init`（`.gitignore` 已排除 `dist/`）。
 
 ```powershell
-cd MicPinWin
+cd MyPinWin
 git init
 git add .
-git commit -m "MicPin for Windows: tray mic guardian with priority ordering and temporary mute"
+git commit -m "定音 MyPin: tray mic guardian with priority ordering and temporary mute"
 git branch -M main
-git remote add origin https://github.com/<your-account>/micpin-win.git
+git remote add origin https://github.com/<your-account>/mypin-win.git
 git push -u origin main
 ```
 
@@ -243,4 +244,4 @@ git push -u origin main
 - [ ] `dist/` 没有被提交（构建产物不入库）；
 - [ ] `docs/images/` 下的截图已提交（README 引用了它们）；
 - [x] `LICENSE` 已是 MIT；
-- [ ] 安装包 `dist\MicPinSetup.exe` 如果需要分发，走 GitHub Releases 而不是提交进仓库。
+- [ ] 安装包 `dist\MyPinSetup.exe` 如果需要分发，走 GitHub Releases 而不是提交进仓库。

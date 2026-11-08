@@ -14,9 +14,9 @@
 > 纯 .NET Framework 4.8 + WinForms + Core Audio COM 直调，单文件 exe，无需安装运行时。
 > 原始分辨率高、150%/200% 缩放的高分屏下按原生像素渲染（PerMonitorV2）。
 
-**[下载安装包 MicPinSetup.exe](https://github.com/bhuyuqingguo/micpin-win/releases/latest/download/MicPinSetup.exe)**（89 KB，双击安装）
-· [便携版 MicPin.exe](https://github.com/bhuyuqingguo/micpin-win/releases/latest/download/MicPin.exe)
-· [全部版本](https://github.com/bhuyuqingguo/micpin-win/releases)
+**[下载安装包 MyPinSetup.exe](https://github.com/bhuyuqingguo/mypin-win/releases/latest/download/MyPinSetup.exe)**（122 KB，双击安装）
+· [便携版 MyPin.exe](https://github.com/bhuyuqingguo/mypin-win/releases/latest/download/MyPin.exe)
+· [全部版本](https://github.com/bhuyuqingguo/mypin-win/releases)
 
 ---
 
@@ -37,7 +37,7 @@ Windows 的默认输入设备经常被“最后插上的那个设备”或蓝牙
 - 拔掉 USB 麦克风后，系统掉到内置麦，而你想要它保持原来的选择；
 - 同时有多个 USB 麦克风时，希望能指定“先用哪个、后用哪个”。
 
-MicPin 常驻托盘，盯着设备插拔与默认设备变更，把默认输入强制锁到你指定的设备；
+**定音**常驻托盘，盯着设备插拔与默认设备变更，把默认输入强制锁到你指定的设备；
 同时提供 **优先级排序** 和 **临时屏蔽**，让多麦克风场景可控。
 
 ## 核心特性
@@ -75,10 +75,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 产物：
 
 ```
-dist\MicPin.exe        # 托盘主程序（约 66 KB，单文件）
-dist\MicPinDiag.exe    # 控制台诊断工具（约 20 KB）
-dist\micpin.ico        # 构建过程中生成的图标
+dist\MyPin.exe         # 托盘主程序（约 82 KB，单文件）
+dist\MyPinDiag.exe     # 控制台诊断工具（约 20 KB）
 ```
+
+> 程序图标取自 `assets\logo\app-icon.ico`，构建时直接嵌入，不再由程序自己生成。
 
 > 编译用的是 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`（C# 5 语法）。
 > 因此**源码里不能使用字符串插值、`?.`、`nameof`、表达式体成员**等新语法，改动时请注意。
@@ -91,25 +92,27 @@ dist\micpin.ico        # 构建过程中生成的图标
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 ```
 
-产物 `dist\MicPinSetup.exe`（约 89 KB），主程序已内嵌其中，单文件即可分发：
+产物 `dist\MyPinSetup.exe`（约 122 KB），主程序已内嵌其中，单文件即可分发：
 
 | 动作 | 说明 |
 | --- | --- |
 | 双击运行 | 图形安装向导，可选「登录时启动」「在桌面创建快捷方式」 |
-| `MicPinSetup.exe --install` | 静默安装（含登录启动与桌面快捷方式） |
-| `MicPinSetup.exe --uninstall` | 静默卸载 |
+| `MyPinSetup.exe --install` | 静默安装（含登录启动与桌面快捷方式） |
+| `MyPinSetup.exe --uninstall` | 静默卸载 |
 
 安装位置与卸载：
 
-- 程序装到 `%LOCALAPPDATA%\Programs\MicPin\`，**per-user，不需要管理员**，不触发 UAC；
+- 程序装到 `%LOCALAPPDATA%\Programs\MyPin\`，**per-user，不需要管理员**，不触发 UAC；
 - 开始菜单有快捷方式；卸载器是安装目录下的 `Uninstall.exe`；
-- 卸载入口：「设置 → 应用 → 已安装的应用 → MicPin」或直接跑 `Uninstall.exe`；
+- 卸载入口：「设置 → 应用 → 已安装的应用 → 定音 MyPin」或直接跑 `Uninstall.exe`；
 - 卸载会清理安装目录、两个快捷方式、`HKCU\...\Run` 启动项与卸载登记项，
-  **保留** `%APPDATA%\MicPin\settings.json`（重装后设置还在）。
+  **保留** `%APPDATA%\MyPin\settings.json`（重装后设置还在）。
+- 从 1.0（MicPin）升级时，安装器会自动清掉旧的安装目录、快捷方式与启动项，
+  并把 `%APPDATA%\MicPin\settings.json` 搬到 `%APPDATA%\MyPin\`，设置与锁定设备原样保留。
 
 ## 使用
 
-1. 双击 `dist\MicPinSetup.exe` 安装，或直接双击 `dist\MicPin.exe` 免安装运行，托盘出现麦克风图标。
+1. 双击 `dist\MyPinSetup.exe` 安装，或直接双击 `dist\MyPin.exe` 免安装运行，托盘出现麦克风图标。
 2. 左键单击或双击托盘图标 → 打开主界面。
 3. 在“麦克风优先级”里调整顺序；点设备行左侧圆点即可锁定该设备（再点一次回到自动）。
 4. 想临时不用某个麦克风，点该行右侧「屏蔽」；「全部恢复」清空所有屏蔽。
@@ -118,17 +121,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 ## 诊断
 
 ```powershell
-.\dist\MicPinDiag.exe              # 列出采集端点、三种角色的默认设备、自动模式结果、PolicyConfig 可用性
-.\dist\MicPinDiag.exe --set "CABLE"  # 按 id 或名称子串把默认输入切到匹配设备（验证写入链路）
+.\dist\MyPinDiag.exe                 # 列出采集端点、三种角色的默认设备、自动模式结果、PolicyConfig 可用性
+.\dist\MyPinDiag.exe --set "CABLE"   # 按 id 或名称子串把默认输入切到匹配设备（验证写入链路）
 ```
 
 ## 目录结构
 
 ```
-MicPinWin/
-├─ build.ps1             # 构建主程序（两遍编译以嵌入图标）
+mypin-win/
+├─ build.ps1             # 构建主程序（嵌入 assets/logo/app-icon.ico）
 ├─ build-installer.ps1   # 构建安装包（把主程序嵌成资源）
 ├─ app.manifest          # PerMonitorV2 DPI 感知、Win10/11 supportedOS
+├─ assets/logo/          # 品牌图标源文件（svg / ico / png）
 ├─ installer/
 │  └─ Installer.cs       # 自包含 per-user 安装器 / 卸载器
 ├─ src/

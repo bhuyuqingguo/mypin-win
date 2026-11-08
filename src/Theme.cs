@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace MicPin
+namespace MyPin
 {
     /// <summary>One dark palette so every surface, chip and button stays in sync.</summary>
     internal static class Theme

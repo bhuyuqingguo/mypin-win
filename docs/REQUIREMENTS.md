@@ -1,6 +1,6 @@
 # 需求说明（Requirements）
 
-本文档记录 MicPin for Windows 的需求来源、功能拆解与验收标准。
+本文档记录定音 MyPin for Windows 的需求来源、功能拆解与验收标准。
 需求按提出顺序分为四个批次：**R1 移植基线 → R2 主界面 → R3 排序与屏蔽 → R4 高分屏与视觉**。
 
 ---
@@ -62,7 +62,7 @@ macOS 上存在的痛点，在 Windows 上同样存在且更明显：Windows 会
 - 分类规则必须能识别本机真实环境：内置麦克风的枚举器可能是 `SOUNDWIRE`（骁龙平台的
   Cirrus Logic XU），不能只识别 `HDAUDIO`。
 
-**验收**：`MicPinDiag.exe` 输出中，内置麦克风阵列显示为 Built-in，VB-Audio CABLE 显示为 Virtual。
+**验收**：`MyPinDiag.exe` 输出中，内置麦克风阵列显示为 Built-in，VB-Audio CABLE 显示为 Virtual。
 
 ### FR-2 自动模式选择（P0）
 
@@ -126,7 +126,7 @@ macOS 上存在的痛点，在 Windows 上同样存在且更明显：Windows 会
 
 ### FR-10 开机启动（P1）
 
-- 勾选后写入 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`，值名 `MicPin`。
+- 勾选后写入 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`，值名 `MyPin`。
 - 未勾选时确保该值不存在。
 
 ### FR-11 主界面窗口（P0，第二批需求）
@@ -188,7 +188,7 @@ macOS 上存在的痛点，在 Windows 上同样存在且更明显：Windows 会
 | 编号 | 需求 | 说明 |
 | --- | --- | --- |
 | NFR-1 | 零依赖 | 仅依赖 .NET Framework 4.8 与 Windows 自带组件，产物为单个 exe |
-| NFR-2 | 免安装 | 绿色版，拷贝即可运行；配置写在 `%APPDATA%\MicPin\settings.json` |
+| NFR-2 | 免安装 | 绿色版，拷贝即可运行；配置写在 `%APPDATA%\MyPin\settings.json` |
 | NFR-3 | 低占用 | 空闲内存数 MB；无定时器风暴（3 秒轮询 + 事件去抖） |
 | NFR-4 | 不打扰 | 不在任务栏常驻窗口；关闭窗口即隐藏；不弹模态框 |
 | NFR-5 | 健壮 | 音频子系统不可用、设置文件损坏、注册表写入失败都必须静默降级，不崩溃 |

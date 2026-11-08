@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace MicPin
+namespace MyPin
 {
     internal enum DeviceKind
     {

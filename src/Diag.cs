@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MicPin
+namespace MyPin
 {
     /// <summary>
     /// Console diagnostics: lists endpoints, shows the current defaults and can

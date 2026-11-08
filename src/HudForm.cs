@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace MicPin
+namespace MyPin
 {
     /// <summary>Small confirmation toast in the top-right corner of the screen.</summary>
     internal sealed class HudForm : Form

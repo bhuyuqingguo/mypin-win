@@ -1,4 +1,4 @@
-# Builds MicPin.exe (tray app) and MicPinDiag.exe (console diagnostics)
+# Builds MyPin.exe (tray app) and MyPinDiag.exe (console diagnostics)
 # using the C# compiler that ships with Windows - no SDK, no NuGet, no runtime install.
 $ErrorActionPreference = "Stop"
 
@@ -6,7 +6,11 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $src = Join-Path $root "src"
 $dist = Join-Path $root "dist"
 $manifest = Join-Path $root "app.manifest"
-$icon = Join-Path $dist "micpin.ico"
+$icon = Join-Path $root "assets\logo\app-icon.ico"
+
+if (-not (Test-Path $icon)) {
+    throw "Cannot find the application icon: $icon"
+}
 
 $csc = Join-Path $env:WINDIR "Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 if (-not (Test-Path $csc)) {
@@ -37,19 +41,12 @@ $diagSources = @(
     (Join-Path $src "Diag.cs")
 )
 
-$exe = Join-Path $dist "MicPin.exe"
-$diagExe = Join-Path $dist "MicPinDiag.exe"
+$exe = Join-Path $dist "MyPin.exe"
+$diagExe = Join-Path $dist "MyPinDiag.exe"
 
 Write-Host "Building $exe"
-& $csc @("/nologo", "/target:winexe", "/platform:anycpu", "/optimize+", "/out:$exe", "/win32manifest:$manifest") @references @appSources
-if ($LASTEXITCODE -ne 0) { throw "Main build failed." }
-
-# First pass has no icon; let the app render one, then rebuild with it embedded.
-Write-Host "Generating application icon"
-Start-Process -FilePath $exe -ArgumentList "--write-icon", $icon -Wait -WindowStyle Hidden
-Write-Host "Rebuilding $exe with icon"
 & $csc @("/nologo", "/target:winexe", "/platform:anycpu", "/optimize+", "/out:$exe", "/win32manifest:$manifest", "/win32icon:$icon") @references @appSources
-if ($LASTEXITCODE -ne 0) { throw "Icon build failed." }
+if ($LASTEXITCODE -ne 0) { throw "Main build failed." }
 
 Write-Host "Building $diagExe"
 & $csc @("/nologo", "/target:exe", "/platform:anycpu", "/optimize+", "/out:$diagExe") @references @diagSources

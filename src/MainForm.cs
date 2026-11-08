@@ -5,7 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace MicPin
+namespace MyPin
 {
     /// <summary>Immutable view of everything the window needs to render.</summary>
     internal sealed class AppSnapshot

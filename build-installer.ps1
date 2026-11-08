@@ -1,14 +1,14 @@
-# Builds dist\MicPinSetup.exe: a per-user installer with MicPin.exe embedded as a resource.
+# Builds dist\MyPinSetup.exe: a per-user installer with MyPin.exe embedded as a resource.
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File .\build-installer.ps1
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist = Join-Path $root "dist"
-$app = Join-Path $dist "MicPin.exe"
-$icon = Join-Path $dist "micpin.ico"
+$app = Join-Path $dist "MyPin.exe"
+$icon = Join-Path $root "assets\logo\app-icon.ico"
 $manifest = Join-Path $root "app.manifest"
 $installerSource = Join-Path $root "installer\Installer.cs"
-$setup = Join-Path $dist "MicPinSetup.exe"
+$setup = Join-Path $dist "MyPinSetup.exe"
 
 function Find-Csc {
     $candidates = @(
@@ -22,14 +22,14 @@ function Find-Csc {
 }
 
 if (-not (Test-Path $app)) {
-    Write-Host "MicPin.exe not found, building it first"
+    Write-Host "MyPin.exe not found, building it first"
     & (Join-Path $root "build.ps1")
 }
 
 $csc = Find-Csc
 $manifestArg = "/win32manifest:" + $manifest
 $iconArg = "/win32icon:" + $icon
-$resourceArg = "/resource:" + $app + ",MicPinPayload.exe"
+$resourceArg = "/resource:" + $app + ",MyPinPayload.exe"
 
 $compilerArgs = @(
     "/nologo", "/target:winexe", "/platform:anycpu", "/optimize+", "/out:$setup",

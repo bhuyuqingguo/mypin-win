@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace MicPin
+namespace MyPin
 {
     /// <summary>All user-facing text, following the Windows display language.</summary>
     internal static class L
@@ -27,7 +27,7 @@ namespace MicPin
             return Zh ? chinese : english;
         }
 
-        public static string AppName { get { return "MicPin"; } }
+        public static string AppName { get { return Pick("MyPin", "定音"); } }
 
         public static string CurrentInput(string name)
         {
@@ -50,7 +50,7 @@ namespace MicPin
         public static string StatusNoAudio { get { return Pick("Audio devices unavailable", "音频设备不可用"); } }
 
         public static string MenuChooseDevice { get { return Pick("Which microphone to lock", "锁定哪个麦克风"); } }
-        public static string MenuOpenWindow { get { return Pick("Open MicPin window", "打开 MicPin 窗口"); } }
+        public static string MenuOpenWindow { get { return Pick("Open MyPin window", "打开定音窗口"); } }
 
         public static string WindowSubtitle
         {
@@ -80,7 +80,7 @@ namespace MicPin
         public static string MenuShowName { get { return Pick("Show device name in the tray corner", "在任务栏角落显示设备名称"); } }
         public static string MenuLaunchAtLogin { get { return Pick("Launch at login", "登录时启动"); } }
         public static string MenuRecheck { get { return Pick("Re-check now", "立即重新检测"); } }
-        public static string MenuQuit { get { return Pick("Quit MicPin", "退出 MicPin"); } }
+        public static string MenuQuit { get { return Pick("Quit MyPin", "退出定音"); } }
 
         public static string TagUsb { get { return "USB"; } }
         public static string TagBuiltIn { get { return Pick("Built-in", "内置"); } }

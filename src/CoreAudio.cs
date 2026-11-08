@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace MicPin
+namespace MyPin
 {
     internal static class AudioConstants
     {
