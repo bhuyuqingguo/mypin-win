@@ -242,5 +242,5 @@ git push -u origin main
 
 - [ ] `dist/` 没有被提交（构建产物不入库）；
 - [ ] `docs/images/` 下的截图已提交（README 引用了它们）；
-- [ ] 需要的话补 `LICENSE`（README 里留了占位）；
+- [x] `LICENSE` 已是 MIT；
 - [ ] 安装包 `dist\MicPinSetup.exe` 如果需要分发，走 GitHub Releases 而不是提交进仓库。
