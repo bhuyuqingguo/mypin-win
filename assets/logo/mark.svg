@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+     stroke="currentColor" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 定音叉：双叉 -->
+  <path d="M23.5 9V26" />
+  <path d="M40.5 9V26" />
+  <!-- 叉底圆弧 -->
+  <path d="M23.5 26C23.5 37.2 40.5 37.2 40.5 26" />
+  <!-- 针杆 -->
+  <path d="M32 33.6V45.5" />
+  <!-- 针尖 -->
+  <path d="M32 56 28.8 45.6 35.2 45.6Z" fill="currentColor" stroke-width="1.5" />
+</svg>

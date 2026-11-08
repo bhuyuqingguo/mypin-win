@@ -1,9 +1,16 @@
-# MicPin for Windows
+# 定音 · MyPin
+
+<img src="assets/logo/app-icon-512.png" width="96" align="left" hspace="14" vspace="4" alt="定音 MyPin">
+
+**定音**（英文名 MyPin）—— 一锤定音，让声音停在你选的那只麦克风上。
+取「一锤定音」与「音叉」两层意思：音叉定音高，这枚工具定默认输入，叉柄收成一枚针尖，把飘来飘去的系统默认钉住。
+
+<br clear="left">
 
 让 Windows 的默认输入设备始终停在你指定的麦克风上：插上 USB 麦克风就立刻抢到系统默认，
 戴蓝牙耳机听歌时不会再被耳机麦克风顶掉。
 
-> 从 macOS 版 MicPin（菜单栏麦克风守护）移植，行为对齐，界面按 Windows 习惯重做。
+> 从 macOS 版移植，行为对齐，界面按 Windows 习惯重做。
 > 纯 .NET Framework 4.8 + WinForms + Core Audio COM 直调，单文件 exe，无需安装运行时。
 > 原始分辨率高、150%/200% 缩放的高分屏下按原生像素渲染（PerMonitorV2）。
 
