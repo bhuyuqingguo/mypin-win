@@ -203,16 +203,21 @@ namespace MyPin
             }
         }
 
-        public static Font Font(float points, FontStyle style)
+        /// <summary>
+        /// Builds a font in device pixels. Point sizes are resolved against the system
+        /// DPI, which is wrong on a monitor whose DPI differs from the system one.
+        /// </summary>
+        public static Font Font(float points, FontStyle style, float scale)
         {
+            float pixels = points * (96f / 72f) * (scale <= 0f ? 1f : scale);
             string family = L.Zh ? "Microsoft YaHei UI" : "Segoe UI";
             try
             {
-                return new Font(family, points, style);
+                return new Font(family, pixels, style, GraphicsUnit.Pixel);
             }
             catch (Exception)
             {
-                return new Font(FontFamily.GenericSansSerif, points, style);
+                return new Font(FontFamily.GenericSansSerif, pixels, style, GraphicsUnit.Pixel);
             }
         }
 

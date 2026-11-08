@@ -36,7 +36,16 @@ namespace MyPin
                 TrayApp app = new TrayApp();
                 if (args.Length >= 1 && string.Equals(args[0], "--show", StringComparison.OrdinalIgnoreCase))
                 {
-                    app.ShowWindow();
+                    // Open once the message loop runs, so the window is laid out at its final DPI.
+                    System.Windows.Forms.Timer opener = new System.Windows.Forms.Timer();
+                    opener.Interval = 300;
+                    opener.Tick += delegate
+                    {
+                        opener.Stop();
+                        opener.Dispose();
+                        app.ShowWindow();
+                    };
+                    opener.Start();
                 }
                 Application.Run(app);
                 GC.KeepAlive(mutex);

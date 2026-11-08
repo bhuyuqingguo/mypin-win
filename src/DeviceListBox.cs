@@ -41,10 +41,11 @@ namespace MyPin
         private const int BlockWidth = 54;
         private const int ArrowWidth = 20;
 
-        private readonly Font _nameFont;
-        private readonly Font _smallFont;
+        private Font _nameFont;
+        private Font _smallFont;
 
         private float _scale = 1f;
+        private float _fontScale = -1f;
         private int _hover = -1;
 
         public event EventHandler<DeviceActionEventArgs> DeviceAction;
@@ -55,15 +56,29 @@ namespace MyPin
             DrawMode = DrawMode.OwnerDrawFixed;
             IntegralHeight = false;
             BackColor = Theme.SurfaceAlt;
-            _nameFont = Ui.Font(9.5f, FontStyle.Regular);
-            _smallFont = Ui.Font(8f, FontStyle.Regular);
-            Font = _nameFont;
+            SetScale(1f);
         }
 
         /// <summary>Re-applies the DPI scale; call again whenever the window DPI changes.</summary>
         public void SetScale(float scale)
         {
             _scale = scale <= 0f ? 1f : scale;
+
+            // Control.Font ignores an equal font and keeps the old instance, so the
+            // old one may only be released once the size really changed.
+            if (Math.Abs(_scale - _fontScale) > 0.01f)
+            {
+                Font previous = Font;
+                _fontScale = _scale;
+                _nameFont = Ui.Font(9.5f, FontStyle.Regular, _scale);
+                _smallFont = Ui.Font(8f, FontStyle.Regular, _scale);
+                Font = _nameFont;
+                if (previous != null && !ReferenceEquals(Font, previous))
+                {
+                    previous.Dispose();
+                }
+            }
+
             ItemHeight = Px(RowHeight);
             Invalidate();
         }
@@ -129,45 +144,51 @@ namespace MyPin
 
         #region Interaction
 
-        protected override void OnMouseDown(MouseEventArgs e)
+        /// <summary>
+        /// Row buttons are handled before the native list box sees the click; otherwise
+        /// the click would also move the selection, which re-pins the device being blocked.
+        /// </summary>
+        protected override void WndProc(ref Message m)
         {
-            if (e.Button == MouseButtons.Left)
+            if (m.Msg == 0x0201)
             {
-                int index = IndexFromPoint(e.Location);
+                int packed = m.LParam.ToInt32();
+                Point point = new Point((short)(packed & 0xFFFF), (short)((packed >> 16) & 0xFFFF));
+                int index = IndexFromPoint(point);
                 if (index >= 0 && index < Items.Count)
                 {
                     DeviceRow row = Items[index] as DeviceRow;
                     Rectangle bounds = GetItemRectangle(index);
                     if (row != null && !row.IsAuto)
                     {
-                        if (RowHit(BlockRect(bounds), bounds).Contains(e.Location))
+                        DeviceActionEventArgs action = null;
+                        if (RowHit(BlockRect(bounds), bounds).Contains(point))
                         {
-                            Raise(row, 0);
-                            return;
+                            action = new DeviceActionEventArgs(row.Id, 0);
                         }
-                        if (row.CanMoveUp && RowHit(UpRect(bounds), bounds).Contains(e.Location))
+                        else if (row.CanMoveUp && RowHit(UpRect(bounds), bounds).Contains(point))
                         {
-                            Raise(row, -1);
-                            return;
+                            action = new DeviceActionEventArgs(row.Id, -1);
                         }
-                        if (row.CanMoveDown && RowHit(DownRect(bounds), bounds).Contains(e.Location))
+                        else if (row.CanMoveDown && RowHit(DownRect(bounds), bounds).Contains(point))
                         {
-                            Raise(row, 1);
+                            action = new DeviceActionEventArgs(row.Id, 1);
+                        }
+
+                        if (action != null)
+                        {
+                            Focus();
+                            EventHandler<DeviceActionEventArgs> handler = DeviceAction;
+                            if (handler != null)
+                            {
+                                handler(this, action);
+                            }
                             return;
                         }
                     }
                 }
             }
-            base.OnMouseDown(e);
-        }
-
-        private void Raise(DeviceRow row, int delta)
-        {
-            EventHandler<DeviceActionEventArgs> handler = DeviceAction;
-            if (handler != null)
-            {
-                handler(this, new DeviceActionEventArgs(row.Id, delta));
-            }
+            base.WndProc(ref m);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)

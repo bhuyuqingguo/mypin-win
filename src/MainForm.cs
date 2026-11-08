@@ -49,11 +49,11 @@ namespace MyPin
         private readonly Button _recheck;
         private readonly Button _close;
 
-        private readonly Font _titleFont;
-        private readonly Font _subtitleFont;
-        private readonly Font _sectionFont;
-
+        private Font _titleFont;
+        private Font _subtitleFont;
+        private Font _sectionFont;
         private float _scale = 1f;
+        private float _fontScale = -1f;
         private MicState _state = MicState.Idle;
         private bool _updating;
         private string _signature = "\u0000";
@@ -85,20 +85,16 @@ namespace MyPin
             }
             _scale = Ui.ScaleOf(this);
 
-            _titleFont = NewFont(15f, FontStyle.Bold);
-            _subtitleFont = NewFont(8.5f, FontStyle.Regular);
-            _sectionFont = NewFont(9f, FontStyle.Bold);
-
-            _caption = MakeLabel(L.CardCurrentInput, NewFont(8.5f, FontStyle.Regular), Theme.TextSecondary, Theme.Surface);
-            _name = MakeLabel(string.Empty, NewFont(12f, FontStyle.Bold), Theme.TextPrimary, Theme.Surface);
-            _status = MakeLabel(string.Empty, NewFont(8.5f, FontStyle.Regular), Theme.TextSecondary, Theme.Surface);
-            _hint = MakeLabel(L.SectionDevicesHint, NewFont(8f, FontStyle.Regular), Theme.TextMuted, Theme.Window);
+            _caption = MakeLabel(L.CardCurrentInput, Theme.TextSecondary, Theme.Surface);
+            _name = MakeLabel(string.Empty, Theme.TextPrimary, Theme.Surface);
+            _status = MakeLabel(string.Empty, Theme.TextSecondary, Theme.Surface);
+            _hint = MakeLabel(L.SectionDevicesHint, Theme.TextMuted, Theme.Window);
 
             _list = new DeviceListBox();
             _list.DeviceAction += OnDeviceAction;
             _list.SelectedIndexChanged += OnSelectionChanged;
 
-            _restore = MakeButton(L.UnblockAll, false, 8.5f);
+            _restore = MakeButton(L.UnblockAll, false);
             _restore.Enabled = false;
             _restore.Click += delegate { _app.UnblockAll(); };
             Controls.Add(_restore);
@@ -113,11 +109,11 @@ namespace MyPin
             _showName.CheckedChanged += delegate { if (!_updating) _app.SetShowName(_showName.Checked); };
             _launch.CheckedChanged += delegate { if (!_updating) _app.SetLaunchAtLogin(_launch.Checked); };
 
-            _recheck = MakeButton(L.ButtonRecheck, true, 9.5f);
+            _recheck = MakeButton(L.ButtonRecheck, true);
             _recheck.Click += delegate { _app.RecheckNow(); };
             Controls.Add(_recheck);
 
-            _close = MakeButton(L.ButtonClose, false, 9.5f);
+            _close = MakeButton(L.ButtonClose, false);
             _close.Click += delegate { Hide(); };
             Controls.Add(_close);
 
@@ -138,9 +134,45 @@ namespace MyPin
 
         private Font NewFont(float points, FontStyle style)
         {
-            Font font = Ui.Font(points, style);
+            Font font = Ui.Font(points, style, _scale);
             _fonts.Add(font);
             return font;
+        }
+
+        /// <summary>Rebuilds every font for the current DPI; new pixel sizes match the layout.</summary>
+        private void ApplyFonts()
+        {
+            // Control.Font keeps an existing instance when the new one is equal, so the
+            // old fonts may only be released after the size actually changed.
+            if (Math.Abs(_scale - _fontScale) < 0.01f)
+            {
+                return;
+            }
+            _fontScale = _scale;
+
+            foreach (Font previous in _fonts)
+            {
+                previous.Dispose();
+            }
+            _fonts.Clear();
+
+            _titleFont = NewFont(15f, FontStyle.Bold);
+            _subtitleFont = NewFont(8.5f, FontStyle.Regular);
+            _sectionFont = NewFont(9f, FontStyle.Bold);
+
+            _caption.Font = NewFont(8.5f, FontStyle.Regular);
+            _name.Font = NewFont(12f, FontStyle.Bold);
+            _status.Font = NewFont(8.5f, FontStyle.Regular);
+            _hint.Font = NewFont(8f, FontStyle.Regular);
+
+            _restore.Font = NewFont(8.5f, FontStyle.Regular);
+            _recheck.Font = NewFont(9.5f, FontStyle.Regular);
+            _close.Font = NewFont(9.5f, FontStyle.Regular);
+
+            _autoLock.Font = NewFont(9.5f, FontStyle.Regular);
+            _showHud.Font = NewFont(9.5f, FontStyle.Regular);
+            _showName.Font = NewFont(9.5f, FontStyle.Regular);
+            _launch.Font = NewFont(9.5f, FontStyle.Regular);
         }
 
         private int Px(float value)
@@ -154,6 +186,8 @@ namespace MyPin
             SuspendLayout();
             try
             {
+                ApplyFonts();
+
                 _listHeight = _rows * 40;
                 _optionsTitleY = 220 + _listHeight + 24;
                 int checkTop = _optionsTitleY + 20;
@@ -202,11 +236,10 @@ namespace MyPin
             Invalidate();
         }
 
-        private Label MakeLabel(string text, Font font, Color color, Color backColor)
+        private Label MakeLabel(string text, Color color, Color backColor)
         {
             Label label = new Label();
             label.Text = text;
-            label.Font = font;
             label.ForeColor = color;
             label.BackColor = backColor;
             label.AutoSize = false;
@@ -219,16 +252,14 @@ namespace MyPin
         {
             DarkCheck box = new DarkCheck();
             box.Text = text;
-            box.Font = NewFont(9.5f, FontStyle.Regular);
             box.BackColor = Theme.Window;
             return box;
         }
 
-        private Button MakeButton(string text, bool primary, float fontSize)
+        private Button MakeButton(string text, bool primary)
         {
             Button button = new Button();
             button.Text = text;
-            button.Font = NewFont(fontSize, FontStyle.Regular);
             button.FlatStyle = FlatStyle.Flat;
             button.UseVisualStyleBackColor = false;
             button.BackColor = primary ? Theme.Accent : Theme.ButtonBack;

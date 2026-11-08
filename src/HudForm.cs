@@ -12,8 +12,8 @@ namespace MyPin
         private const int WsExNoActivate = 0x08000000;
 
         private readonly Timer _animation;
-        private readonly Font _titleFont;
-        private readonly Font _nameFont;
+        private Font _titleFont;
+        private Font _nameFont;
 
         private string _name = string.Empty;
         private float _opacity;
@@ -30,8 +30,7 @@ namespace MyPin
             BackColor = Color.FromArgb(20, 22, 26);
             DoubleBuffered = true;
             Opacity = 0;
-            _titleFont = Ui.Font(8.5f, FontStyle.Regular);
-            _nameFont = Ui.Font(10.5f, FontStyle.Bold);
+            ApplyFonts();
 
             _animation = new Timer();
             _animation.Interval = 16;
@@ -78,6 +77,8 @@ namespace MyPin
 
         private void ApplyLayout()
         {
+            ApplyFonts();
+
             int padding = (int)Math.Round(12 * _scale);
             int iconSize = (int)Math.Round(26 * _scale);
             int gap = (int)Math.Round(10 * _scale);
@@ -101,6 +102,20 @@ namespace MyPin
             Rectangle working = Screen.PrimaryScreen.WorkingArea;
             Left = working.Right - Width - (int)Math.Round(24 * _scale);
             Top = working.Top + (int)Math.Round(24 * _scale);
+        }
+
+        private void ApplyFonts()
+        {
+            if (_titleFont != null)
+            {
+                _titleFont.Dispose();
+            }
+            if (_nameFont != null)
+            {
+                _nameFont.Dispose();
+            }
+            _titleFont = Ui.Font(8.5f, FontStyle.Regular, _scale);
+            _nameFont = Ui.Font(10.5f, FontStyle.Bold, _scale);
         }
 
         private void UpdateRegion()
@@ -208,8 +223,14 @@ namespace MyPin
             {
                 _animation.Stop();
                 _animation.Dispose();
-                _titleFont.Dispose();
-                _nameFont.Dispose();
+                if (_titleFont != null)
+                {
+                    _titleFont.Dispose();
+                }
+                if (_nameFont != null)
+                {
+                    _nameFont.Dispose();
+                }
             }
             base.Dispose(disposing);
         }

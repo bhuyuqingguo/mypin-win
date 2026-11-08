@@ -24,7 +24,7 @@ namespace MyPin
                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Window;
             ForeColor = Theme.TextPrimary;
-            Font = Ui.Font(9.5f, FontStyle.Regular);
+            Font = Ui.Font(9.5f, FontStyle.Regular, 1f);
             Cursor = Cursors.Hand;
             TabStop = true;
         }
@@ -48,6 +48,10 @@ namespace MyPin
             }
         }
 
+        /// <summary>
+        /// Only the layout scale lives here; the font is owned by the parent window,
+        /// which rebuilds it for every DPI before calling this.
+        /// </summary>
         public void SetScale(float scale)
         {
             _scale = scale <= 0f ? 1f : scale;

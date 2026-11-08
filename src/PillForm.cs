@@ -16,7 +16,7 @@ namespace MyPin
         private const int WsExNoActivate = 0x08000000;
         private const int WsExTransparent = 0x00000020;
 
-        private readonly Font _nameFont;
+        private Font _nameFont;
         private string _name = string.Empty;
         private float _scale = 1f;
 
@@ -28,7 +28,7 @@ namespace MyPin
             StartPosition = FormStartPosition.Manual;
             BackColor = Color.FromArgb(20, 22, 26);
             DoubleBuffered = true;
-            _nameFont = Ui.Font(9f, FontStyle.Regular);
+            ApplyFonts();
         }
 
         protected override bool ShowWithoutActivation
@@ -70,6 +70,8 @@ namespace MyPin
 
         private void ApplyLayout()
         {
+            ApplyFonts();
+
             int padding = (int)Math.Round(9 * _scale);
             int iconSize = (int)Math.Round(14 * _scale);
             int gap = (int)Math.Round(6 * _scale);
@@ -87,6 +89,15 @@ namespace MyPin
             Rectangle working = Screen.PrimaryScreen.WorkingArea;
             Left = working.Right - Width - (int)Math.Round(6 * _scale);
             Top = working.Bottom - Height - (int)Math.Round(6 * _scale);
+        }
+
+        private void ApplyFonts()
+        {
+            if (_nameFont != null)
+            {
+                _nameFont.Dispose();
+            }
+            _nameFont = Ui.Font(9f, FontStyle.Regular, _scale);
         }
 
         private void UpdateRegion()
@@ -144,7 +155,10 @@ namespace MyPin
         {
             if (disposing)
             {
-                _nameFont.Dispose();
+                if (_nameFont != null)
+                {
+                    _nameFont.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
